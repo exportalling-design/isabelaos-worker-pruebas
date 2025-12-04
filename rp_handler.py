@@ -30,6 +30,7 @@ MODELS_DIR.mkdir(parents=True, exist_ok=True)
 IMAGES_DIR = Path("/runpod/volumes/isabelaos/images")
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
+<<<<<<< HEAD
 # Carpeta para guardar videos
 VIDEOS_DIR = Path("/runpod/volumes/isabelaos/videos")
 VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
@@ -37,6 +38,14 @@ VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
 # Pipelines globales (se inicializan una sola vez)
 _PIPELINE = None          # SD imagen
 _AD_PIPELINE = None       # AnimateDiff
+=======
+# Carpeta para guardar videos (GIF por ahora)
+VIDEOS_DIR = Path("/runpod/volumes/isabelaos/videos")
+VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Pipeline global (se inicializa una sola vez)
+_PIPELINE = None
+>>>>>>> 1e21153fc489de1f976887f457fa090274d29dc3
 
 
 # ------------------ Utilidades ------------------
@@ -79,6 +88,7 @@ def _err(msg: str, **kwargs) -> Dict[str, Any]:
     return out
 
 
+<<<<<<< HEAD
 def _hf_login_if_needed():
     """Login opcional a Hugging Face usando HF_TOKEN, reutilizable."""
     hf_token = os.getenv("HF_TOKEN", None)
@@ -93,6 +103,9 @@ def _hf_login_if_needed():
 
 
 # ------------------ Inicialización del modelo (IMAGEN) ------------------
+=======
+# ------------------ Inicialización del modelo ------------------
+>>>>>>> 1e21153fc489de1f976887f457fa090274d29dc3
 
 
 def _get_pipeline():
@@ -114,7 +127,7 @@ def _get_pipeline():
 
     _hf_login_if_needed()
 
-    print(f"[ISE] Cargando modelo (imagen) {HF_MODEL_ID} en {device}...")
+    print(f"[ISE] Cargando modelo {HF_MODEL_ID} en {device}...")
     pipe = StableDiffusionPipeline.from_pretrained(
         HF_MODEL_ID,
         torch_dtype=dtype,
@@ -129,10 +142,11 @@ def _get_pipeline():
         pass
 
     _PIPELINE = pipe
-    print("[ISE] Modelo de imagen cargado.")
+    print("[ISE] Modelo cargado.")
     return _PIPELINE
 
 
+<<<<<<< HEAD
 # ------------------ Inicialización AnimateDiff (VIDEO) ------------------
 
 
@@ -193,6 +207,8 @@ def _get_animatediff_pipeline():
     return _AD_PIPELINE
 
 
+=======
+>>>>>>> 1e21153fc489de1f976887f457fa090274d29dc3
 # ------------------ Lógica principal de generación (IMAGEN) ------------------
 
 
@@ -365,6 +381,7 @@ def generate_video_from_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
     )
 
 
+<<<<<<< HEAD
 # ------------------ Generación de VIDEO con AnimateDiff ------------------
 
 
@@ -464,6 +481,8 @@ def generate_animatediff_video_from_input(input_data: Dict[str, Any]) -> Dict[st
     )
 
 
+=======
+>>>>>>> 1e21153fc489de1f976887f457fa090274d29dc3
 # ------------------ Handler de RunPod ------------------
 
 
@@ -472,7 +491,11 @@ def handler(event):
     Formato típico:
     {
       "input": {
+<<<<<<< HEAD
         "action": "image" | "video" | "animatediff" | "health",
+=======
+        "action": "image" | "video" | "health",
+>>>>>>> 1e21153fc489de1f976887f457fa090274d29dc3
         "prompt": "...",
         "negative_prompt": "...",
         "width": 512,
@@ -493,6 +516,7 @@ def handler(event):
         if action == "image":
             return generate_image_from_input(data)
 
+<<<<<<< HEAD
         # Video básico (GIF desde varios frames con SD normal)
         if action == "video":
             return generate_video_from_input(data)
@@ -501,6 +525,12 @@ def handler(event):
         if action == "animatediff":
             return generate_animatediff_video_from_input(data)
 
+=======
+        # Video básico (GIF desde varios frames)
+        if action == "video":
+            return generate_video_from_input(data)
+
+>>>>>>> 1e21153fc489de1f976887f457fa090274d29dc3
         # Aquí después podemos ir agregando:
         # if action == "cinecam": ...
         # if action == "bodysync": ...

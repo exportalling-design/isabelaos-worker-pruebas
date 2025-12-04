@@ -39,3 +39,7 @@ EXPOSE 8000
 
 # Comando de inicio del worker RunPod
 CMD ["python", "-u", "rp_handler.py"]
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1e21153fc489de1f976887f457fa090274d29dc3
