@@ -6,7 +6,7 @@ COPY . /workspace
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-=======
+
 # Imagen pública de Python con Debian slim
 FROM python:3.10-slim
 
