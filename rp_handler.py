@@ -24,33 +24,12 @@ MODELS_DIR.mkdir(parents=True, exist_ok=True)
 IMAGES_DIR = Path("/runpod/volumes/isabelaos/images")
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
-<<<<<<< HEAD
-# Carpeta para guardar videos (GIF o MP4)
-=======
 # Carpeta para guardar videos (GIF por ahora)
->>>>>>> 02791861f45a6ec242a8ef28e4251445bafee31f
 VIDEOS_DIR = Path("/runpod/volumes/isabelaos/videos")
 VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Pipeline global (se inicializa una sola vez)
 _PIPELINE = None
-
-# -------- NUEVO: configuración para AnimateDiff (video MP4) --------
-
-# Modelo base para video (puede ser el mismo que el de imagen o uno entrenado para video)
-VIDEO_BASE_MODEL_ID = os.getenv(
-    "ISE_VIDEO_BASE_MODEL_ID",
-    HF_MODEL_ID  # por defecto reutiliza el mismo que imágenes
-)
-
-# Motion adapter de AnimateDiff (OBLIGATORIO para que funcione el modo video_ad)
-VIDEO_MOTION_ADAPTER_ID = os.getenv(
-    "ISE_VIDEO_MOTION_ADAPTER_ID",
-    ""  # si está vacío, devolvemos error controlado al intentar usar video_ad
-)
-
-# Pipeline global de AnimateDiff
-_AD_PIPELINE = None
 
 
 # ------------------ Utilidades ------------------
@@ -93,7 +72,7 @@ def _err(msg: str, **kwargs) -> Dict[str, Any]:
     return out
 
 
-# ------------------ Inicialización del modelo (IMAGEN) ------------------
+# ------------------ Inicialización del modelo ------------------
 
 
 def _get_pipeline():
@@ -123,7 +102,7 @@ def _get_pipeline():
             # si falla el login, igual intentamos descargar
             pass
 
-    print(f"[ISE] Cargando modelo (imagen) {HF_MODEL_ID} en {device}...")
+    print(f"[ISE] Cargando modelo {HF_MODEL_ID} en {device}...")
     pipe = StableDiffusionPipeline.from_pretrained(
         HF_MODEL_ID,
         torch_dtype=dtype,
@@ -138,75 +117,10 @@ def _get_pipeline():
         pass
 
     _PIPELINE = pipe
-    print("[ISE] Modelo de imagen cargado.")
+    print("[ISE] Modelo cargado.")
     return _PIPELINE
 
 
-<<<<<<< HEAD
-# ------------------ Inicialización AnimateDiff (VIDEO MP4) ------------------
-
-
-def _get_ad_pipeline():
-    """
-    Crea o devuelve el pipeline global de AnimateDiff.
-    Usa VIDEO_BASE_MODEL_ID y VIDEO_MOTION_ADAPTER_ID.
-    """
-    global _AD_PIPELINE
-    if _AD_PIPELINE is not None:
-        return _AD_PIPELINE
-
-    if not VIDEO_MOTION_ADAPTER_ID:
-        # No se configuró el adapter, devolvemos error controlado más adelante
-        raise RuntimeError(
-            "ISE_VIDEO_MOTION_ADAPTER_ID no está definido. "
-            "Configura el ID del motion adapter en las variables de entorno."
-        )
-
-    _ensure_hf_cached_download_alias()
-
-    import torch
-    from diffusers import MotionAdapter, AnimateDiffPipeline
-
-    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # Opcional: login a Hugging Face si tienes token
-    hf_token = os.getenv("HF_TOKEN", None)
-    if hf_token:
-        try:
-            from huggingface_hub import login
-            login(token=hf_token)
-        except Exception:
-            pass
-
-    print(f"[ISE-AD] Cargando motion adapter {VIDEO_MOTION_ADAPTER_ID}...")
-    motion_adapter = MotionAdapter.from_pretrained(
-        VIDEO_MOTION_ADAPTER_ID,
-        torch_dtype=dtype,
-        cache_dir=str(MODELS_DIR),
-    )
-
-    print(f"[ISE-AD] Cargando base model (video) {VIDEO_BASE_MODEL_ID}...")
-    pipe = AnimateDiffPipeline.from_pretrained(
-        VIDEO_BASE_MODEL_ID,
-        motion_adapter=motion_adapter,
-        torch_dtype=dtype,
-        cache_dir=str(MODELS_DIR),
-        safety_checker=None
-    ).to(device)
-
-    try:
-        pipe.enable_model_cpu_offload()
-    except Exception:
-        pass
-
-    _AD_PIPELINE = pipe
-    print("[ISE-AD] Pipeline AnimateDiff cargado.")
-    return _AD_PIPELINE
-
-
-=======
->>>>>>> 02791861f45a6ec242a8ef28e4251445bafee31f
 # ------------------ Lógica principal de generación (IMAGEN) ------------------
 
 
@@ -322,11 +236,7 @@ def generate_video_from_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         seed_base = int(seed)
 
     print(
-<<<<<<< HEAD
-        f"[ISE] Generando VIDEO básico (GIF): prompt='{prompt[:60]}...' "
-=======
         f"[ISE] Generando VIDEO básico: prompt='{prompt[:60]}...' "
->>>>>>> 02791861f45a6ec242a8ef28e4251445bafee31f
         f"({width}x{height}, steps={steps}, frames={num_frames}, fps={fps})"
     )
 
@@ -370,11 +280,7 @@ def generate_video_from_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         format="GIF",
     )
 
-<<<<<<< HEAD
-    print(f"[ISE] VIDEO básico (GIF) guardado en: {out_path}")
-=======
     print(f"[ISE] VIDEO básico guardado en: {out_path}")
->>>>>>> 02791861f45a6ec242a8ef28e4251445bafee31f
 
     video_b64 = _b64_from_file(out_path)
 
@@ -387,96 +293,6 @@ def generate_video_from_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
     )
 
 
-<<<<<<< HEAD
-# ------------------ NUEVO: Generación VIDEO MP4 (AnimateDiff) ------------------
-
-
-def generate_animatediff_video_from_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Genera un video MP4 usando AnimateDiffPipeline.
-    NO reemplaza al GIF; es un modo nuevo: action = "video_ad" o "video_mp4".
-    """
-    try:
-        pipe = _get_ad_pipeline()
-    except Exception as e:
-        # Error controlado si falta adapter o configuración
-        return _err(
-            f"AnimateDiff no disponible: {e}",
-            hint="Configura ISE_VIDEO_BASE_MODEL_ID e ISE_VIDEO_MOTION_ADAPTER_ID en RunPod."
-        )
-
-    prompt = input_data.get(
-        "prompt",
-        "a cinematic shot of a woman walking in a futuristic city, ultra realistic"
-    )
-    negative = input_data.get(
-        "negative_prompt",
-        "low quality, blurry, deformed, text"
-    )
-
-    width = int(input_data.get("width", 512))
-    height = int(input_data.get("height", 512))
-    steps = int(input_data.get("steps", 16))
-    guidance = float(input_data.get("guidance_scale", 7.0))
-
-    fps = int(input_data.get("fps", 8))
-    duration = int(input_data.get("duration", 2))  # segundos
-    num_frames = max(1, fps * duration)
-
-    seed = input_data.get("seed", None)
-
-    import torch
-    generator = None
-    if seed is not None:
-        try:
-            generator = torch.Generator(device=pipe.device.type).manual_seed(int(seed))
-        except Exception:
-            generator = None
-
-    print(
-        f"[ISE-AD] Generando VIDEO AnimateDiff: prompt='{prompt[:60]}...' "
-        f"({width}x{height}, steps={steps}, frames={num_frames}, fps={fps})"
-    )
-
-    result = pipe(
-        prompt=prompt,
-        negative_prompt=negative,
-        width=width,
-        height=height,
-        num_inference_steps=steps,
-        guidance_scale=guidance,
-        num_frames=num_frames,
-        generator=generator,
-    )
-
-    # AnimateDiff devuelve lista de frames (PIL)
-    frames = result.frames[0]
-
-    from datetime import datetime
-    import imageio.v2 as imageio
-
-    VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
-    name = f"isabela_ad_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.mp4"
-    out_path = VIDEOS_DIR / name
-
-    # Guardar como MP4 usando imageio-ffmpeg
-    imageio.mimsave(out_path, frames, fps=fps)
-
-    print(f"[ISE-AD] VIDEO AnimateDiff guardado en: {out_path}")
-
-    video_b64 = _b64_from_file(out_path)
-
-    return _ok(
-        video_path=str(out_path),
-        video_b64=video_b64,
-        format="mp4",
-        fps=fps,
-        num_frames=len(frames),
-    )
-
-
-=======
->>>>>>> 02791861f45a6ec242a8ef28e4251445bafee31f
 # ------------------ Handler de RunPod ------------------
 
 
@@ -485,11 +301,7 @@ def handler(event):
     Formato típico:
     {
       "input": {
-<<<<<<< HEAD
-        "action": "image" | "video" | "video_ad" | "health",
-=======
         "action": "image" | "video" | "health",
->>>>>>> 02791861f45a6ec242a8ef28e4251445bafee31f
         "prompt": "...",
         "negative_prompt": "...",
         "width": 512,
@@ -510,21 +322,10 @@ def handler(event):
         if action == "image":
             return generate_image_from_input(data)
 
-<<<<<<< HEAD
-        # Video básico (GIF desde varios frames) – SIN CAMBIOS
-        if action == "video":
-            return generate_video_from_input(data)
-
-        # NUEVO: Video MP4 con AnimateDiff
-        if action in ("video_ad", "video_mp4"):
-            return generate_animatediff_video_from_input(data)
-
-=======
         # Video básico (GIF desde varios frames)
         if action == "video":
             return generate_video_from_input(data)
 
->>>>>>> 02791861f45a6ec242a8ef28e4251445bafee31f
         # Aquí después podemos ir agregando:
         # if action == "cinecam": ...
         # if action == "bodysync": ...
