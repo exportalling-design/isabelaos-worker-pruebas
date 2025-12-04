@@ -26,11 +26,6 @@ RUN pip install --no-cache-dir \
     torchvision==0.18.1+cu121 \
     --index-url https://download.pytorch.org/whl/cu121
 
-# ---- Extras para video / AnimateDiff ----
-RUN pip install --no-cache-dir \
-    imageio[ffmpeg] \
-    einops
-
 # ---- Copiar el resto del código del worker ----
 COPY . /workspace
 
@@ -39,4 +34,3 @@ EXPOSE 8000
 
 # Comando de inicio del worker RunPod
 CMD ["python", "-u", "rp_handler.py"]
-
