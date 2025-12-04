@@ -1,12 +1,3 @@
-FROM runpod/serverless:3.10-onnx
-
-WORKDIR /workspace
-
-COPY . /workspace
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-
 # Imagen pública de Python con Debian slim
 FROM python:3.10-slim
 
@@ -35,6 +26,11 @@ RUN pip install --no-cache-dir \
     torchvision==0.18.1+cu121 \
     --index-url https://download.pytorch.org/whl/cu121
 
+# ---- Extras para video / AnimateDiff ----
+RUN pip install --no-cache-dir \
+    imageio[ffmpeg] \
+    einops
+
 # ---- Copiar el resto del código del worker ----
 COPY . /workspace
 
@@ -42,5 +38,4 @@ COPY . /workspace
 EXPOSE 8000
 
 # Comando de inicio del worker RunPod
->>>>>>> 02791861f45a6ec242a8ef28e4251445bafee31f
 CMD ["python", "-u", "rp_handler.py"]
